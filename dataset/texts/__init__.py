@@ -223,9 +223,9 @@ def _should_keep_token(token, token_dict):
 
 def phonemes_to_sequence(phonemes):
     string = phonemes.split() if isinstance(phonemes, str) else phonemes
-    # string.append(EOS)
-    sequence = list(map(convert_phoneme_CMU, string))
-    sequence = [_phoneme_to_id[s] for s in sequence]
+    string.append(EOS)
+    # sequence = list(map(convert_phoneme_CMU, string))
+    sequence = [_phoneme_to_id[s] for s in string]
     # if _should_keep_token(s, _phoneme_to_id)]
     return sequence
 
@@ -259,7 +259,7 @@ def text_to_phonemes(text, custom_words={}):
     PUNCTUATION = "!?.,-:;\"'()"
     for word in words:
         if all(c in PUNCTUATION for c in word):
-            pronounciation = ["sp"]
+            pronounciation = ["pau"]
         else:
             pronounciation = g2p.word_to_phonemes(word)
             pronounciation = list(
