@@ -1,19 +1,19 @@
 data:
-  data_dir: 'H:\Deepsync\backup\fastspeech\data\'
-  wav_dir: 'H:\Deepsync\backup\deepsync\LJSpeech-1.1\wavs\'
+  data_dir: './data/'
+  wav_dir: '/content/drive/MyDrive/datasets/sova_dataset/wavs/'
   # Compute statistics
-  e_mean: 21.578571319580078
-  e_std: 18.916799545288086
-  e_min: 0.01786651276051998
-  e_max: 130.5338592529297
+  e_mean: 38.026676177978516   # 21.578571319580078
+  e_std: 34.02145767211914     # 18.916799545288086
+  e_min: 0.00702105974778533   # 0.01786651276051998
+  e_max: 185.35250854492188    # 130.5338592529297
 
-  f0_mean: 206.5135564772342
-  f0_std:  53.633228905750336
-  p_min: 71.0
-  p_max: 676.2260946528305 # 799.8901977539062
-  train_filelist: "./filelists/train_filelist.txt"
-  valid_filelist: "./filelists/valid_filelist.txt"
-  tts_cleaner_names: ['english_cleaners']
+  f0_mean: 119.6242072113062 #206.5135564772342
+  f0_std:  30.207111513178447 #53.633228905750336
+  p_min: 71.00091054692462 #71.0
+  p_max: 409.19597655957745 #676.2260946528305 #799.8901977539062
+  train_filelist: "./filelists/train.txt"
+  valid_filelist: "./filelists/valid.txt"
+  tts_cleaner_names: ['basic_cleaners']
 
 # feature extraction related
 audio:
@@ -108,7 +108,7 @@ model:
 
 train:
   # optimization related
-  eos: False #True
+  eos: True #True
   opt: 'noam'
   accum_grad: 4
   grad_clip: 1.0

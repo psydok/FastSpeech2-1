@@ -11,7 +11,10 @@ from dataset.texts.symbols import (
 )
 from dataset.texts.dict_ import symbols_
 import nltk
-from g2p_en import G2p
+from queue import Queue
+import sys
+sys.path.append('/content/drive/MyDrive/russian_g2p')
+from russian_g2p.Grapheme2Phoneme import Grapheme2Phoneme
 
 # Mappings from symbol to numeric ID and vice versa:
 _symbol_to_id = {s: i for i, s in enumerate(symbols)}
@@ -20,77 +23,126 @@ _id_to_symbol = {i: s for i, s in enumerate(symbols)}
 # Regular expression matching text enclosed in curly braces:
 _curly_re = re.compile(r"(.*?)\{(.+?)\}(.*)")
 
-symbols_inv = {v: k for k, v in symbols_.items()}
 
 valid_symbols = [
-    "AA",
-    "AA1",
-    "AE",
-    "AE0",
-    "AE1",
-    "AH",
-    "AH0",
-    "AH1",
-    "AO",
-    "AO1",
-    "AW",
-    "AW0",
-    "AW1",
-    "AY",
-    "AY0",
-    "AY1",
-    "B",
-    "CH",
-    "D",
-    "DH",
-    "EH",
-    "EH0",
-    "EH1",
-    "ER",
-    "EY",
-    "EY0",
-    "EY1",
-    "F",
-    "G",
-    "HH",
-    "IH",
-    "IH0",
-    "IH1",
-    "IY",
-    "IY0",
-    "IY1",
-    "JH",
-    "K",
-    "L",
-    "M",
-    "N",
-    "NG",
-    "OW",
-    "OW0",
-    "OW1",
-    "OY",
-    "OY0",
-    "OY1",
-    "P",
-    "R",
-    "S",
-    "SH",
-    "T",
-    "TH",
-    "UH",
-    "UH0",
-    "UH1",
-    "UW",
-    "UW0",
-    "UW1",
-    "V",
-    "W",
-    "Y",
-    "Z",
-    "ZH",
-    "pau",
-    "sil",
-    "spn"
+    'A',
+    'A0',
+    'A0l',
+    'Al',
+    'B',
+    'B0',
+    'B0l',
+    'Bl',
+    'D',
+    'D0',
+    'D0l',
+    'DZ',
+    'DZ0',
+    'DZ0l',
+    'DZH',
+    'DZH0',
+    'DZH0l',
+    'DZHl',
+    'DZl',
+    'Dl',
+    'E',
+    'E0',
+    'E0l',
+    'El',
+    'F',
+    'F0',
+    'F0l',
+    'Fl',
+    'G',
+    'G0',
+    'G0l',
+    'GH',
+    'GH0',
+    'GH0l',
+    'GHl',
+    'Gl',
+    'I',
+    'I0',
+    'I0l',
+    'Il',
+    'J0',
+    'J0l',
+    'K',
+    'K0',
+    'K0l',
+    'KH',
+    'KH0',
+    'KH0l',
+    'KHl',
+    'Kl',
+    'L',
+    'L0',
+    'L0l',
+    'Ll',
+    'M',
+    'M0',
+    'M0l',
+    'Ml',
+    'N',
+    'N0',
+    'N0l',
+    'Nl',
+    'O',
+    'O0',
+    'O0l',
+    'Ol',
+    'P',
+    'P0',
+    'P0l',
+    'Pl',
+    'R',
+    'R0',
+    'R0l',
+    'Rl',
+    'S',
+    'S0',
+    'S0l',
+    'SH',
+    'SH0',
+    'SH0l',
+    'SHl',
+    'Sl',
+    'T',
+    'T0',
+    'T0l',
+    'TS',
+    'TS0',
+    'TS0l',
+    'TSH',
+    'TSH0',
+    'TSH0l',
+    'TSHl',
+    'TSl',
+    'Tl',
+    'U',
+    'U0',
+    'U0l',
+    'Ul',
+    'V',
+    'V0',
+    'V0l',
+    'Vl',
+    'Y',
+    'Y0',
+    'Y0l',
+    'Yl',
+    'Z',
+    'Z0',
+    'Z0l',
+    'ZH',
+    'ZH0',
+    'ZH0l',
+    'ZHl',
+    'Zl',
+    'pau',
+    'sil',
+    'spn', 
+    'sp'
 ]
 
 
@@ -124,8 +176,8 @@ def sequence_to_text(sequence):
     """Converts a sequence of IDs back to a string"""
     result = ""
     for symbol_id in sequence:
-        if symbol_id in symbols_inv:
-            s = symbols_inv[symbol_id]
+        if symbol_id in _id_to_symbol:
+            s = _id_to_symbol[symbol_id]
             # Enclose ARPAbet back in curly braces:
             if len(s) > 1 and s[0] == "@":
                 s = "{%s}" % s[1:]
@@ -187,31 +239,6 @@ def sequence_to_phonemes(sequence, use_eos=False):
     return string
 
 
-def convert_phoneme_CMU(phoneme):
-    REMAPPING = {
-        'AA0': 'AA1',
-        'AA2': 'AA1',
-        'AE2': 'AE1',
-        'AH2': 'AH1',
-        'AO0': 'AO1',
-        'AO2': 'AO1',
-        'AW2': 'AW1',
-        'AY2': 'AY1',
-        'EH2': 'EH1',
-        'ER0': 'EH1',
-        'ER1': 'EH1',
-        'ER2': 'EH1',
-        'EY2': 'EY1',
-        'IH2': 'IH1',
-        'IY2': 'IY1',
-        'OW2': 'OW1',
-        'OY2': 'OY1',
-        'UH2': 'UH1',
-        'UW2': 'UW1',
-    }
-    return REMAPPING.get(phoneme, phoneme)
-
-
 def text_to_phonemes(text, custom_words={}):
     """
     Convert text into ARPAbet.
@@ -223,62 +250,18 @@ def text_to_phonemes(text, custom_words={}):
         Example: {'word': ['W', 'EU1', 'R', 'D']}
     :return: list of str, phonemes
     """
-    g2p = G2p()
+    g2p = Grapheme2Phoneme()
 
-    """def convert_phoneme_CMU(phoneme):
-        REMAPPING = {
-            'AA0': 'AA1',
-            'AA2': 'AA1',
-            'AE2': 'AE1',
-            'AH2': 'AH1',
-            'AO0': 'AO1',
-            'AO2': 'AO1',
-            'AW2': 'AW1',
-            'AY2': 'AY1',
-            'EH2': 'EH1',
-            'ER0': 'EH1',
-            'ER1': 'EH1',
-            'ER2': 'EH1',
-            'EY2': 'EY1',
-            'IH2': 'IH1',
-            'IY2': 'IY1',
-            'OW2': 'OW1',
-            'OY2': 'OY1',
-            'UH2': 'UH1',
-            'UW2': 'UW1',
-        }
-        return REMAPPING.get(phoneme, phoneme)
-        """
 
-    def convert_phoneme_listener(phoneme):
-        VOWELS = ['A', 'E', 'I', 'O', 'U']
-        if phoneme[0] in VOWELS:
-            phoneme += '1'
-        return phoneme  # convert_phoneme_CMU(phoneme)
-
-    try:
-        known_words = nltk.corpus.cmudict.dict()
-    except LookupError:
-        nltk.download("cmudict")
-        known_words = nltk.corpus.cmudict.dict()
-
-    for word, phonemes in custom_words.items():
-        known_words[word.lower()] = [phonemes]
-
-    words = nltk.tokenize.WordPunctTokenizer().tokenize(text.lower())
+    words = text.lower().split()
 
     phonemes = []
     PUNCTUATION = "!?.,-:;\"'()"
     for word in words:
         if all(c in PUNCTUATION for c in word):
-            pronounciation = ["pau"]
-        elif word in known_words:
-            pronounciation = known_words[word][0]
-            pronounciation = list(
-                pronounciation
-            )  # map(convert_phoneme_CMU, pronounciation))
+            pronounciation = ["sp"]
         else:
-            pronounciation = g2p(word)
+            pronounciation = g2p.word_to_phonemes(word)
             pronounciation = list(
                 pronounciation
             )  # (map(convert_phoneme_CMU, pronounciation))

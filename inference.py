@@ -15,10 +15,13 @@ from utils.stft import STFT
 from scipy.io.wavfile import write
 from dataset.texts import valid_symbols
 from utils.hparams import HParam, load_hparam_str
-from dataset.texts.cleaners import english_cleaners, punctuation_removers
+from dataset.texts.cleaners import basic_cleaners, punctuation_removers
 import matplotlib.pyplot as plt
-from g2p_en import G2p
-
+# from g2p_en import G2p
+from queue import Queue
+import sys
+sys.path.append('/content/drive/MyDrive/russian_g2p')
+from russian_g2p.Transcription import Transcription
 
 def synthesis(args, text, hp):
     """Decode with E2E-TTS model."""
@@ -72,8 +75,25 @@ def synthesis(args, text, hp):
 ### for direct text/para input ###
 
 
-g2p = G2p()
+g2p = G2p()#RUSSIAN
 
+def rus_to_phonemes(text):
+    text = text.replace('-', '—')
+    text = text.replace('…', '.')
+    punctuation_marks=';:,.!?¡¿—…"«»“”()'
+    transcriptor = Transcription()
+    phonemes = ''
+    queue = Queue()
+    for i in text:
+      if i in punctuation_marks:
+        queue.put(' ' + i + ' ')
+    for it in transcriptor.transcribe([text]):
+      for seq in it:
+        if queue.empty():
+          phonemes += ' '.join(seq)
+          continue
+        phonemes += ' '.join(seq) + queue.get()
+    return phonemes.split()
 
 def plot_mel(mels):
     melspec = mels.reshape(1, 80, -1)
@@ -86,16 +106,16 @@ def preprocess(text):
     # input - line of text
     # output - list of phonemes
     str1 = " "
-    clean_content = english_cleaners(text)
+    clean_content = basic_cleaners(text)
     clean_content = punctuation_removers(clean_content)
-    phonemes = g2p(clean_content)
+    phonemes = rus_to_phonemes(clean_content)
  
     phonemes = ["" if x == " " else x for x in phonemes]
-    phonemes = ["pau" if x == "," else x for x in phonemes]
-    phonemes = ["pau" if x == "." else x for x in phonemes]
+    phonemes = ["sp" if x == "," else x for x in phonemes]
+    phonemes = ["sp" if x == "." else x for x in phonemes]
     phonemes = str1.join(phonemes)
 
-    return phonemes
+    return phonemes + ' ~'
 
 
 def process_paragraph(para):
